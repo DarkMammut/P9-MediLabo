@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  patient-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://patient-db:3306/patientdb
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      - patient-db
+
+  patient-db:
+    image: mysql:8
+    container_name: patient-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: patientdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - patientdb_data:/var/lib/mysql
+
+volumes:
+  patientdb_data:
