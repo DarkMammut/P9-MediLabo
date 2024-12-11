@@ -1,0 +1,74 @@
+services:
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    ports:
+      - "8061:8061"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8061/eureka/apps" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+  patient-service:
+    build:
+      context: ./patient-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://patient-db:3306/patientdb
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: password
+    depends_on:
+      patient-db:
+        condition: service_healthy
+
+  patient-db:
+    image: mysql:8
+    container_name: patient-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: patientdb
+      MYSQL_USER: root
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./patientdb_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=password" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  test-db:
+    image: mysql:8
+    container_name: test-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: testpassword
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpassword
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./testdb_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "testuser", "--password=testpassword" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
