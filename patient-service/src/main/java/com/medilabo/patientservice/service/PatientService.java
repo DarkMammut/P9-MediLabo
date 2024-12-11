@@ -5,6 +5,7 @@ import com.medilabo.patientservice.repository.PatientRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -16,6 +17,11 @@ public class PatientService {
         this.patientRepository = patientRepository;
     }
 
+    //Récupérer tous les patients
+
+    public List<Patient> getAllPatients() {
+        return patientRepository.findAll();
+    }
     // Récupérer les informations personnelles d'un patient
 
     public Optional<Patient> getPatientById(Long id) {
@@ -28,7 +34,7 @@ public class PatientService {
         return patientRepository.findById(id).map(patient -> {
             patient.setFirstName(updatedPatient.getFirstName());
             patient.setLastName(updatedPatient.getLastName());
-            patient.setDateOfBirth(updatedPatient.getDateOfBirth());
+            patient.setBirthdate(updatedPatient.getBirthdate());
             patient.setGender(updatedPatient.getGender());
             patient.setAddress(updatedPatient.getAddress());
             patient.setPhoneNumber(updatedPatient.getPhoneNumber());

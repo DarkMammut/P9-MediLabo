@@ -24,16 +24,16 @@ public class Patient {
     private Long id;
 
     @NotBlank(message = "First name is mandatory")
-    @Column(name = "first_name", nullable = false)
+    @Column(nullable = false)
     private String firstName;
 
     @NotBlank(message = "Last name is mandatory")
-    @Column(name = "last_name", nullable = false)
+    @Column(nullable = false)
     private String lastName;
 
     @NotNull(message = "Date of birth is mandatory")
-    @Column(name = "date_of_birth", nullable = false)
-    private LocalDate dateOfBirth;
+    @Column(nullable = false)
+    private LocalDate birthdate;
 
     @NotNull(message = "Gender is mandatory")
     @Column(nullable = false)
