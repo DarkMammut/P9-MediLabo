@@ -1,7 +1,11 @@
 package com.medilabo.apigateway.component;
 
+
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.impl.TextCodec;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -21,14 +25,16 @@ public class JwtTokenProvider {
         Date issuedAt = new Date(now);
         Date expirationDate = new Date(now + 3600000); // 1 heure d'expiration
 
-        // Créer un SecretKey à partir de la clé secrète
-        SecretKey key = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
+        // Décoder la clé secrète encodée en Base64
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
 
         return Jwts.builder()
+                //.setIssuer("Stormpath")
                 .setSubject(username)
                 .setIssuedAt(issuedAt)
                 .setExpiration(expirationDate)
-                .signWith(key, SignatureAlgorithm.HS256)  // Signer avec l'objet Key
+                .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
     }
 }

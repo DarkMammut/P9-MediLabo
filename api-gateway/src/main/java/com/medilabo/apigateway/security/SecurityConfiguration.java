@@ -41,17 +41,17 @@ public class SecurityConfiguration {
                         .pathMatchers("/login", "/logout").permitAll() // Autoriser les pages de login/logout
                         .anyExchange().authenticated() // Tout le reste nécessite une authentification
                 )
-                .formLogin(formLogin -> formLogin
-                        .loginPage("/login") // Page de login personnalisée
-                        .authenticationSuccessHandler((webFilterExchange, authentication) ->
-                                Mono.fromRunnable(() -> {
-                                    // Logique à exécuter après un login réussi (facultatif)
-                                }))
-                        .authenticationFailureHandler((webFilterExchange, exception) ->
-                                Mono.fromRunnable(() -> {
-                                    // Logique en cas d'échec d'authentification (facultatif)
-                                }))
-                )
+//                .formLogin(formLogin -> formLogin
+//                        .loginPage("/login") // Page de login personnalisée
+//                        .authenticationSuccessHandler((webFilterExchange, authentication) ->
+//                                Mono.fromRunnable(() -> {
+//                                    // Logique à exécuter après un login réussi (facultatif)
+//                                }))
+//                        .authenticationFailureHandler((webFilterExchange, exception) ->
+//                                Mono.fromRunnable(() -> {
+//                                    // Logique en cas d'échec d'authentification (facultatif)
+//                                }))
+//                )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter()) // Utilisation du convertisseur corrigé

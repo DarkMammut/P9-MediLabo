@@ -35,6 +35,18 @@ services:
       patient-db:
         condition: service_healthy
 
+  notes-service:
+    build:
+      context: ./notes-service
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:adminpassword@notes-db:27017/notesdb
+    depends_on:
+      notes-db:
+        condition: service_healthy
+
   patient-db:
     image: mysql:8
     container_name: patient-db
@@ -54,21 +66,20 @@ services:
       timeout: 5s
       retries: 3
 
-  test-db:
-    image: mysql:8
-    container_name: test-db
+  notes-db:
+    image: mongo:5
+    container_name: notes-db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: testpassword
-      MYSQL_DATABASE: testdb
-      MYSQL_USER: testuser
-      MYSQL_PASSWORD: testpassword
+      MONGO_INITDB_DATABASE: notesdb
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: adminpassword
     ports:
-      - "3307:3306"
+      - "27017:27017"
     volumes:
-      - ./testdb_data:/var/lib/mysql
+      - ./notesdb_data:/data/db
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "testuser", "--password=testpassword" ]
+      test: ["CMD", "mongo", "-u", "admin", "-p", "adminpassword", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 3

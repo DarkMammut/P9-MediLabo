@@ -1,30 +1,42 @@
 import React, { useState } from "react";
-import API from "../../../api/api"; // Axios instance
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
+import API from "../../../api/Api";
 
 const Login = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(null);
+
+    const { setToken } = useAuth();
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
+
         try {
-            const response = await API.post("/login", {
-                username,
-                password,
-            }, {
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                withCredentials: true, // Pour gérer les cookies de session
-            });
-            console.log(response.data);
-            if (response.data.accessToken) {
-                localStorage.setItem("accessToken", response.data.accessToken);
-            } else {
-                console.error("Token manquant dans la réponse");
+            const response = await API.post(
+                "/login",
+                {
+                    username,
+                    password,
+                },
+                {
+                    withCredentials: true,
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            console.log(response.data.token);
+
+            if (response.data.token) {
+                document.cookie = `token=${response.data.token}; path=/; secure; HttpOnly`;
+                setToken(response.data.token);
             }
-            navigate("/"); // Rediriger après connexion
+
+            navigate("/");
         } catch (err) {
             setError("Invalid username or password");
         }
