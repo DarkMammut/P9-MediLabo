@@ -29,12 +29,11 @@ public class AuthController {
             // Générer le token
             String token = jwtTokenProvider.generateToken(loginRequest.getUsername());
 
-            // Créer un cookie HttpOnly avec le token
             ResponseCookie cookie = ResponseCookie.from("token", token)
-                    .httpOnly(true) // Empêche l'accès au cookie via JavaScript
-                    .secure(true) // Facultatif : Assurez-vous que le cookie soit envoyé seulement sur HTTPS
-                    .path("/") // Le cookie sera valable pour toutes les routes du serveur
-                    .maxAge(60 * 60) // Expiration du cookie après 1 heure (en secondes)
+                    .secure(true) // Nécessite HTTPS
+                    .sameSite("Strict") // Protection contre CSRF
+                    .path("/")
+                    .maxAge(60 * 60) // 1 heure
                     .build();
 
             // Ajouter le cookie à la réponse

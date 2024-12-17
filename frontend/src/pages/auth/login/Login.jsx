@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
-import API from "../../../api/Api";
+import API from "../../../api/api";
 
 const Login = () => {
     const [username, setUsername] = useState("");
@@ -28,8 +28,6 @@ const Login = () => {
                     },
                 }
             );
-
-            console.log(response.data.token);
 
             if (response.data.token) {
                 document.cookie = `token=${response.data.token}; path=/; secure; HttpOnly`;

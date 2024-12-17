@@ -1,24 +1,24 @@
 import axios from "axios";
-import { useAuth } from "../context/AuthContext"; // Import du contexte
+
+const getTokenFromCookie = () => {
+    console.log(document.cookie)
+    const matches = document.cookie.match(new RegExp(
+        "(?:^|; )" + encodeURIComponent("token") + "=([^;]*)"
+    ));
+    return matches ? matches[1] : null;
+};
 
 const API = axios.create({
-    baseURL: "http://localhost:8080/", // API Gateway
-    withCredentials: true,
-    timeout: 10000,
+    baseURL: "http://localhost:8080", // API Gateway URL
+    withCredentials: true, // Permet d'envoyer les cookies si nécessaire
 });
 
-export const useApiInterceptor = () => {
-    const { token } = useAuth(); // Récupère le token depuis le contexte
-
-    API.interceptors.request.use(
-        (config) => {
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-            return config;
-        },
-        (error) => Promise.reject(error)
-    );
-};
+API.interceptors.request.use((config) => {
+    const token = getTokenFromCookie();
+    if (token) {
+        config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config;
+}, (error) => Promise.reject(error));
 
 export default API;

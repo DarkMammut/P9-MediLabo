@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import API from "../../../api/Api"; // Axios instance
+import API from "../../../api/api"; // Axios instance
 import { Link } from "react-router-dom";
 
 const PatientsList = () => {

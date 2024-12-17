@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, parse } from 'date-fns'; // Importez format et parse
-import API from "../../../api/Api"; // Axios instance
+import API from "../../../api/api"; // Axios instance
 
 const PatientDetail = () => {
     const { id } = useParams();

@@ -1,13 +1,11 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext"; // Import du contexte
+import { useAuth } from "../../context/AuthContext";
 
 const ProtectedRoute = ({ children }) => {
-    const { token } = useAuth(); // Récupère le token depuis le contexte
+    const { token } = useAuth();
 
-    if (token === null) {
-        return <div>Loading...</div>; // Affiche un message de chargement si le token n'est pas encore disponible
-    }
+    console.log("Token détecté dans ProtectedRoute :", token);
 
     if (!token) {
         return <Navigate to="/login" />;
