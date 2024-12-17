@@ -39,3 +39,6 @@ build/
 
 ## patientdb_data ##
 /patientdb_data
+
+## notesdb_data ##
+/notesdb_data

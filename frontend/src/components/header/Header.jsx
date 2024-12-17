@@ -1,32 +1,16 @@
 import React from "react";
-import { useNavigate } from "react-router-dom"; // Pour rediriger après la déconnexion
-import "./Header.css";
+import { useAuth } from "../../context/AuthContext";
 
 function Header() {
-    const navigate = useNavigate();
-
-    const handleLogout = () => {
-        // Supprimer le token JWT de localStorage
-        localStorage.removeItem("accessToken");
-
-        // Rediriger vers la page de login après la déconnexion
-        navigate("/login");
-    };
-
-    // Vérifier si l'utilisateur est connecté
-    const isLoggedIn = localStorage.getItem("accessToken");
+    const { token, logout } = useAuth();
 
     return (
         <div className="header">
             <div className="auth-links">
-                {/* Si l'utilisateur est connecté, afficher le lien de déconnexion */}
-                {isLoggedIn ? (
-                    <a href="/logout" onClick={handleLogout}>Déconnexion</a>
+                {token ? (
+                    <button onClick={logout}>Déconnexion</button>
                 ) : (
-                    <>
-                        {/* Sinon, afficher le lien de connexion */}
-                        <a href="/login">Connexion</a>
-                    </>
+                    <a href="/login">Connexion</a>
                 )}
             </div>
         </div>
