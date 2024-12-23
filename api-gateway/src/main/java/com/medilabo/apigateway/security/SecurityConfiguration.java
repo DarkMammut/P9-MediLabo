@@ -1,5 +1,6 @@
 package com.medilabo.apigateway.security;
 
+import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,9 +11,6 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -37,32 +35,21 @@ public class SecurityConfiguration {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Gestion CORS
                 .csrf(ServerHttpSecurity.CsrfSpec::disable) // Désactiver CSRF
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/public/**").permitAll() // Routes publiques
-                        .pathMatchers("/login", "/logout").permitAll() // Autoriser les pages de login/logout
-                        .anyExchange().authenticated() // Tout le reste nécessite une authentification
+                        .pathMatchers("/public/**", "/auth/login", "/auth/logout", "/auth/check").permitAll()
+                        .pathMatchers("/api/patients/**", "/api/notes/**").authenticated()
+                        .anyExchange().authenticated()
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt
-                                .jwtAuthenticationConverter(jwtAuthenticationConverter())
-                        )
-                )
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable) // Désactiver l'authentification basique
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable) // Désactiver l'authentification par formulaire
                 .build();
     }
 
     @Bean
-    public MapReactiveUserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails user = User.builder()
-                .username("user")
-                .password(passwordEncoder.encode("password123")) // Encode explicitement le mot de passe
-                .roles("USER")
-                .build();
-
-        return new MapReactiveUserDetailsService(user);
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Utilise BCrypt pour encoder les mots de passe
+    public MapReactiveUserDetailsService userDetailsService() {
+        User.UserBuilder userBuilder = User.builder();
+        return new MapReactiveUserDetailsService(
+                userBuilder.username("user").password("password123").roles("USER").build()
+        );
     }
 
     @Bean
@@ -72,8 +59,6 @@ public class SecurityConfiguration {
         corsConfig.setAllowedOrigins(List.of("http://localhost:3000")); // Frontend autorisé
         corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfig.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept"));
-        corsConfig.setExposedHeaders(List.of("Authorization"));
-
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig); // Applique la configuration à toutes les routes
@@ -97,7 +82,9 @@ public class SecurityConfiguration {
 
     @Bean
     public NimbusReactiveJwtDecoder jwtDecoder(@Value("${jwt.secret}") String secretKey) {
-        SecretKey key = new SecretKeySpec(secretKey.getBytes(), "HmacSHA512");
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey.trim());
+        SecretKey key = new SecretKeySpec(keyBytes, "HmacSHA256");
+
         return NimbusReactiveJwtDecoder.withSecretKey(key).build();
     }
 }

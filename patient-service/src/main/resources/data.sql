@@ -12,5 +12,7 @@ CREATE TABLE IF NOT EXISTS patients (
 -- Insertion de données initiales
 INSERT INTO patients (first_name, last_name, birthdate, gender, address, phone_number)
 VALUES
-    ('John', 'Doe', '1980-01-01', 'M', '123 Main St', '5551234567'),
-    ('Jane', 'Smith', '1990-05-15', 'F', '456 Elm St', '5559876543');
+    ('Test', 'None', '1966-12-31', 'F', '1 Brookside St', '100-222-3333'),
+    ('Test', 'Borderline', '1945-06-24', 'M', '2 High St', '200-333-4444'),
+    ('Test', 'InDanger', '2004-06-18', 'M', '3 Club Road', '300-444-5555'),
+    ('Test', 'EarlyOnset', '2002-06-28', 'F', '4 Valley Dr', '400-555-6666');

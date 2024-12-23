@@ -1,41 +1,30 @@
 import React, { useState, useEffect } from "react";
-import API from "../../../api/api"; // Axios instance
+import API, { setupAxiosInterceptors } from "../../../api/api"; // Axios instance
 import { Link } from "react-router-dom";
 
 const PatientsList = () => {
   const [patients, setPatients] = useState([]); // Data from API
-  const [filteredPatients, setFilteredPatients] = useState([]); // Filtered data
-  const [filters, setFilters] = useState({
-    lastName: "",
-  });
 
   useEffect(() => {
-    API.get("/patients")
-      .then((response) => {
-        setPatients(response.data);
-        setFilteredPatients(response.data); // Initialize filtered data
-      })
-      .catch((error) => console.error("Error fetching patients:", error));
+    // Configure Axios interceptors
+    setupAxiosInterceptors();
+
+    const fetchPatients = async () => {
+      try {
+        const response = await API.get("/api/patients");
+        if (Array.isArray(response.data)) {
+          setPatients(response.data);
+        } else {
+          console.error("Response data is not an array:", response.data);
+          setPatients([]);
+        }
+      } catch (error) {
+        console.error("Error fetching patients:", error);
+      }
+    };
+
+    fetchPatients();
   }, []);
-
-  // Handle filter changes
-  const handleFilterChange = (key, value) => {
-    setFilters({ ...filters, [key]: value });
-
-    const newFilteredPatients = patients.filter((patient) => {
-      return Object.keys(filters).every((filterKey) => {
-        const filterValue = filterKey === key ? value : filters[filterKey];
-        return (
-          patient[filterKey]
-            ?.toString()
-            .toLowerCase()
-            .includes(filterValue.toLowerCase())
-        );
-      });
-    });
-
-    setFilteredPatients(newFilteredPatients);
-  };
 
   return (
     <div>
@@ -43,26 +32,20 @@ const PatientsList = () => {
       <Link to="/patients/add">
         <button>Ajouter Patient</button>
       </Link>
+
       <table border="1" style={{ width: "100%", marginTop: "20px" }}>
         <thead>
           <tr>
-            <th>
-              Patients
-              <input
-                type="text"
-                placeholder="Filtrer..."
-                value={filters.firstName}
-                onChange={(e) => handleFilterChange("firstName", e.target.value)}
-              />
-            </th>
+            <th>Prénom</th>
+            <th>Nom</th>
           </tr>
         </thead>
         <tbody>
-          {filteredPatients.map((patient) => (
+          {patients.map((patient) => (
             <tr key={patient.id}>
               <td>
                 <Link to={`/patients/${patient.id}`}>
-                    {patient.firstName} {patient.lastName}
+                  {patient.firstName} {patient.lastName}
                 </Link>
               </td>
             </tr>

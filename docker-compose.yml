@@ -1,15 +1,18 @@
 services:
+
   eureka-server:
     build:
       context: ./eureka-server
       dockerfile: Dockerfile
     ports:
       - "8061:8061"
+    networks:
+      - medi-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8061/eureka/apps" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      test: ["CMD", "curl", "-f", "http://localhost:8061/eureka/apps"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   api-gateway:
     build:
@@ -17,9 +20,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    networks:
+      - medi-network
     depends_on:
       eureka-server:
-        condition: service_healthy
+        condition: service_started
 
   patient-service:
     build:
@@ -27,6 +32,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8081:8081"
+    networks:
+      - medi-network
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://patient-db:3306/patientdb
       SPRING_DATASOURCE_USERNAME: root
@@ -34,6 +41,10 @@ services:
     depends_on:
       patient-db:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
+      api-gateway:
+        condition: service_started
 
   notes-service:
     build:
@@ -41,11 +52,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8082:8082"
-    environment:
-      SPRING_DATA_MONGODB_URI: mongodb://admin:adminpassword@notes-db:27017/notesdb
+    networks:
+      - medi-network
     depends_on:
       notes-db:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
+      api-gateway:
+        condition: service_started
 
   patient-db:
     image: mysql:8
@@ -57,10 +72,12 @@ services:
       MYSQL_PASSWORD: password
     ports:
       - "3306:3306"
+    networks:
+      - medi-network
     volumes:
       - ./patientdb_data:/var/lib/mysql
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=password" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=password"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -71,14 +88,18 @@ services:
     restart: always
     environment:
       MONGO_INITDB_DATABASE: notesdb
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: adminpassword
     ports:
       - "27017:27017"
+    networks:
+      - medi-network
     volumes:
       - ./notesdb_data:/data/db
     healthcheck:
-      test: ["CMD", "mongo", "-u", "admin", "-p", "adminpassword", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongo", "-u", "admin", "-p", "mQ9!bX@7wZo3tJ*8", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 3
+
+networks:
+  medi-network:
+    driver: bridge
