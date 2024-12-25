@@ -1,5 +1,7 @@
 package com.medilabo.apigateway.component;
 
+import io.jsonwebtoken.io.Encoders;
+
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
@@ -11,19 +13,19 @@ import java.util.Base64;
 public class JwtKeyGenerator {
 
     public static void main(String[] args) {
-        // Longueur de clé recommandée pour HMAC SHA-512 (512 bits = 64 bytes)
+        // Taille recommandée pour HMAC SHA-256 (256 bits = 32 octets)
         int keyLengthInBytes = 32;
 
-        // Générer une clé sécurisée avec SecureRandom
+        // Génération d'une clé aléatoire
         byte[] keyBytes = new byte[keyLengthInBytes];
         SecureRandom secureRandom = new SecureRandom();
         secureRandom.nextBytes(keyBytes);
 
-        // Convertir les octets en SecretKey
+        // Création de la clé secrète
         SecretKey secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
 
-        // Encoder en Base64 pour utilisation dans la configuration
-        String base64Key = Base64.getEncoder().encodeToString(secretKey.getEncoded());
+        // Encodage en Base64 pour utilisation dans la configuration
+        String base64Key = Encoders.BASE64.encode(secretKey.getEncoded());
 
         // Afficher ou sauvegarder la clé
         System.out.println("Votre clé secrète pour HMAC SHA-256 a été générée avec succès.");

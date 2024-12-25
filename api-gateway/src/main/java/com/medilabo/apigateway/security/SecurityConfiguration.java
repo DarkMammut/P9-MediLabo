@@ -18,6 +18,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
@@ -29,6 +30,7 @@ import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
 import java.util.List;
 
 @Configuration
@@ -72,8 +74,19 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public NimbusReactiveJwtDecoder jwtDecoder(@Value("${jwt.secret}") String secretKey) {
-        SecretKey key = new SecretKeySpec(secretKey.getBytes(), "HmacSHA256");
+    public ReactiveJwtDecoder jwtDecoder(@Value("${jwt.secret}") String secretKeyBase64) {
+        // Décoder la clé encodée en Base64
+        byte[] keyBytes = Base64.getDecoder().decode(secretKeyBase64);
+
+        // Vérifier que la clé a une longueur suffisante pour HMAC SHA-256 (32 octets minimum)
+        if (keyBytes.length < 32) {
+            throw new IllegalArgumentException("La clé secrète doit être d'au moins 256 bits (32 octets) pour HMAC SHA-256.");
+        }
+
+        // Créer la clé secrète
+        SecretKey key = new SecretKeySpec(keyBytes, "HmacSHA256");
+
+        // Retourner le décodeur JWT
         return NimbusReactiveJwtDecoder.withSecretKey(key).build();
     }
 

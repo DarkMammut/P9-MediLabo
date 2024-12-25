@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import API, { setupAxiosInterceptors } from "../../../api/api"; // Axios instance
 import { Link } from "react-router-dom";
+import Header from "../../../components/header/Header";
+import Sidebar from "../../../components/sidebar/Sidebar";
 
 const PatientsList = () => {
   const [patients, setPatients] = useState([]); // Data from API
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     // Configure Axios interceptors
@@ -15,9 +18,11 @@ const PatientsList = () => {
         console.log(response.data);  // Log pour vérifier la structure de la réponse
         if (Array.isArray(response.data)) {
           setPatients(response.data);
+          setIsAuthenticated(true);
         } else {
           console.error("Response data is not an array:", response.data);
           setPatients([]);
+          setIsAuthenticated(false);
         }
       } catch (error) {
         console.error("Error fetching patients:", error);
@@ -29,6 +34,10 @@ const PatientsList = () => {
 
   return (
     <div>
+      <Header isAuthenticated={isAuthenticated} />
+      <Sidebar />
+
+    <main>
       <h1>Patients</h1>
       <Link to="/patients/add">
         <button>Ajouter Patient</button>
@@ -53,6 +62,7 @@ const PatientsList = () => {
           ))}
         </tbody>
       </table>
+    </main>
     </div>
   );
 };

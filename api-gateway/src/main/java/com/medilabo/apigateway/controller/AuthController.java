@@ -84,18 +84,4 @@ public class AuthController {
         exchange.getResponse().addCookie(cookie);
         return Mono.just(ResponseEntity.status(HttpStatus.OK).build());
     }
-
-    @GetMapping("/check")
-    public Mono<ResponseEntity<String>> checkAuthentication(ServerWebExchange exchange) {
-        // Extraction du token JWT depuis le cookie "JWT"
-        return Mono.justOrEmpty(exchange.getRequest().getCookies().getFirst("JWT"))
-                .map(HttpCookie::getValue)  // On obtient la valeur du cookie
-                .flatMap(token -> {
-                    if (jwtTokenProvider.validateToken(token)) {
-                        return Mono.just(ResponseEntity.ok("Authenticated"));
-                    }
-                    return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token"));
-                })
-                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token missing")));
-    }
 }

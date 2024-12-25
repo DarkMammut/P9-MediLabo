@@ -1,7 +1,5 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
-import Header from "./components/header/Header";
-import Sidebar from "./components/sidebar/Sidebar";
 import Home from "./pages/home/home";
 import Login from "./pages/auth/login/Login";
 import PatientsList from "./pages/patient/list/PatientList";
@@ -13,13 +11,11 @@ function App() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        setupAxiosInterceptors(navigate); // Configure l'intercepteur avec navigate
+        setupAxiosInterceptors(navigate);
     }, [navigate]);
 
     return (
         <>
-            <Header />
-            <Sidebar />
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
