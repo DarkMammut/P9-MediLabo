@@ -12,6 +12,7 @@ const PatientsList = () => {
     const fetchPatients = async () => {
       try {
         const response = await API.get("/api/patients");
+        console.log(response.data);  // Log pour vérifier la structure de la réponse
         if (Array.isArray(response.data)) {
           setPatients(response.data);
         } else {

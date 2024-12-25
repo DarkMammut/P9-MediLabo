@@ -4,6 +4,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -24,28 +25,35 @@ public class JwtTokenProvider {
     public String generateToken(String username) {
         long now = System.currentTimeMillis();
         Date expirationDate = new Date(now + 3600000); // 1 heure d'expiration
+        SecretKey secretKey = getSecretKey();
 
         return Jwts.builder()
                 .claim("sub", username)
                 .claim("iat", now / 1000L) // Émet l'heure en secondes
                 .claim("exp", expirationDate.getTime() / 1000L) // Date d'expiration en secondes
-                .signWith(getSecretKey(), SignatureAlgorithm.HS256) // Utilise HMAC-SHA-256
+                .signWith(secretKey, SignatureAlgorithm.HS256) // Utilise HMAC-SHA-256
                 .compact();
     }
 
     public boolean validateToken(String token) {
+        SecretKey secretKey = getSecretKey();
         try {
             Jwts.parser()
-                    .verifyWith(getSecretKey())// Utilise la clé secrète pour valider le token
+                    .verifyWith(secretKey) // Utilise la clé secrète pour valider le token
                     .build()
-                    .parseSignedClaims(token); // Si le token est valide, il est parsé correctement
+                    .parseSignedClaims(token)
+                    .getPayload();
             return true;
+        } catch (SignatureException e) {
+            // Signature invalide
+            System.out.println("*************************Invalid JWT signature*****************************");
+            return false;
         } catch (Exception e) {
-            // Le token est invalide ou expiré et Log l'erreur pour débogage
-            System.err.println("Erreur de validation du token: " + e.getMessage());
+            // Token expiré ou autre erreur
             return false;
         }
     }
+
 
     private SecretKey getSecretKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey.trim());

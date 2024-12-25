@@ -1,17 +1,18 @@
 package com.medilabo.apigateway.component.dto;
 
+import lombok.*;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class AuthResponse {
-    private String accessToken;
 
-    public AuthResponse(String accessToken) {
-        this.accessToken = accessToken;
-    }
+    private String token;
+    private String message;
 
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
+    // Si vous voulez gérer spécifiquement les erreurs avec un seul message, vous pouvez ajouter un constructeur alternatif ici
+    public AuthResponse(String message) {
+        this.token = null;  // Pas de token en cas d'erreur
+        this.message = message;
     }
 }
