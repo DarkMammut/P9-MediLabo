@@ -3,15 +3,13 @@ package com.medilabo.patientservice.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 
 @Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -39,11 +37,9 @@ public class Patient {
     @Column(nullable = false)
     private String gender;
 
-    @NotBlank(message = "Address is mandatory")
-    @Column(nullable = false)
+    @Column()
     private String address;
 
-    @Pattern(regexp = "\\d{10}", message = "Phone number must be 10 digits")
-    @Column(name = "phone_number")
+    @Column()
     private String phoneNumber;
 }

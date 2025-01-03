@@ -3,13 +3,12 @@ import "./Home.css";
 
 const Home = () => {
     return (
-        <div className="content">
-            <h1>Bienvenue sur notre plateforme !</h1>
-            <p>
-                Explorez nos services, apprenez-en plus sur nous, et contactez-nous pour
-                plus d'informations.
-            </p>
+        <div className="background">
+            <div className="container text-center">
+                <a href="/patients" className="btn btn-primary btn-lg">Patients</a>
+            </div>
         </div>
-      );
-    }
+    );
+};
+
 export default Home;

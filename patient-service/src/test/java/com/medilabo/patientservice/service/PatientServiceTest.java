@@ -2,15 +2,11 @@ package com.medilabo.patientservice.service;
 
 import com.medilabo.patientservice.model.Patient;
 import com.medilabo.patientservice.repository.PatientRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDate;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,79 +15,138 @@ import static org.mockito.Mockito.*;
 
 class PatientServiceTest {
 
-    @Mock
     private PatientRepository patientRepository;
-
-    @InjectMocks
     private PatientService patientService;
-
-    private Patient patient;
+    private List<Patient> mockPatients;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        patient = Patient.builder()
+        patientRepository = mock(PatientRepository.class);
+        patientService = new PatientService(patientRepository);
+
+        // Initialize mock patients
+        mockPatients = new ArrayList<>();
+        mockPatients.add(Patient.builder()
                 .id(1L)
-                .firstName("Test")
-                .lastName("Patient")
-                .birthdate(LocalDate.of(1966, 12, 31))
+                .gender("M")
+                .firstName("John")
+                .lastName("Doe")
+                .birthdate(LocalDate.of(2000, 1, 1))
+                .address("Test Address")
+                .phoneNumber("111-111-111")
+                .build());
+        mockPatients.add(Patient.builder()
+                .id(2L)
                 .gender("F")
-                .address("1 Brookside St")
-                .phoneNumber("1002223333")
-                .build();
+                .firstName("Jane")
+                .lastName("Doe")
+                .birthdate(LocalDate.of(1998, 12, 31))
+                .address("Test Address")
+                .phoneNumber("222-222-222")
+                .build());
     }
 
     @Test
-    void testGetAllPatients() {
-        when(patientRepository.findAll()).thenReturn(Arrays.asList(patient));
+    void getAllPatients_ShouldReturnListOfPatients() {
+        when(patientRepository.findAll()).thenReturn(mockPatients);
 
         List<Patient> patients = patientService.getAllPatients();
 
-        assertNotNull(patients);
-        assertEquals(1, patients.size());
+        assertEquals(2, patients.size());
         verify(patientRepository, times(1)).findAll();
     }
 
     @Test
-    void testGetPatientById() {
-        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+    void getPatientById_ShouldReturnPatient_WhenPatientExists() {
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(mockPatients.get(0)));
 
-        Optional<Patient> result = patientService.getPatientById(1L);
+        Optional<Patient> patient = patientService.getPatientById(1L);
 
-        assertTrue(result.isPresent());
-        assertEquals("Test", result.get().getFirstName());
+        assertTrue(patient.isPresent());
+        assertEquals("John", patient.get().getFirstName());
+        assertEquals("Doe", patient.get().getLastName());
         verify(patientRepository, times(1)).findById(1L);
     }
 
     @Test
-    void testAddPatient() {
-        when(patientRepository.save(patient)).thenReturn(patient);
+    void getPatientById_ShouldReturnEmpty_WhenPatientDoesNotExist() {
+        when(patientRepository.findById(99L)).thenReturn(Optional.empty());
 
-        Patient savedPatient = patientService.addPatient(patient);
+        Optional<Patient> patient = patientService.getPatientById(99L);
 
-        assertNotNull(savedPatient);
-        assertEquals("Test", savedPatient.getFirstName());
-        verify(patientRepository, times(1)).save(patient);
+        assertFalse(patient.isPresent());
+        verify(patientRepository, times(1)).findById(99L);
     }
 
     @Test
-    void testUpdatePatient() {
-        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
-        when(patientRepository.save(any(Patient.class))).thenReturn(patient);
+    void createPatient_ShouldSaveAndReturnPatient() {
+        Patient newPatient = Patient.builder()
+                .id(3L)
+                .gender("M")
+                .firstName("Mark")
+                .lastName("Smith")
+                .birthdate(LocalDate.of(1995, 5, 15))
+                .address("New Address")
+                .phoneNumber("333-333-333")
+                .build();
 
-        Patient updatedPatient = patientService.updatePatient(1L, patient);
+        when(patientRepository.save(newPatient)).thenReturn(newPatient);
 
-        assertNotNull(updatedPatient);
-        assertEquals("Test", updatedPatient.getFirstName());
+        Patient savedPatient = patientService.addPatient(newPatient);
+
+        assertEquals(3L, savedPatient.getId());
+        assertEquals("Mark", savedPatient.getFirstName());
+        verify(patientRepository, times(1)).save(newPatient);
+    }
+
+    @Test
+    void updatePatient_ShouldUpdateAndReturnUpdatedPatient_WhenPatientExists() {
+        Patient existingPatient = mockPatients.get(0);
+        Patient updatedPatient = Patient.builder()
+                .id(1L)
+                .gender("M")
+                .firstName("Updated")
+                .lastName("Patient")
+                .birthdate(existingPatient.getBirthdate())
+                .address("Updated Address")
+                .phoneNumber("444-444-444")
+                .build();
+
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(existingPatient));
+        when(patientRepository.save(existingPatient)).thenReturn(updatedPatient);
+
+        Patient result = patientService.updatePatient(1L, updatedPatient);
+
+        assertEquals("Updated", result.getFirstName());
+        assertEquals("Updated Address", result.getAddress());
         verify(patientRepository, times(1)).findById(1L);
-        verify(patientRepository, times(1)).save(any(Patient.class));
+        verify(patientRepository, times(1)).save(existingPatient);
     }
 
     @Test
-    void testDeletePatient() {
+    void updatePatient_ShouldThrowException_WhenPatientDoesNotExist() {
+        Patient updatedPatient = Patient.builder()
+                .id(1L)
+                .gender("M")
+                .firstName("Updated")
+                .lastName("Patient")
+                .build();
+
+        when(patientRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            patientService.updatePatient(1L, updatedPatient);
+        });
+
+        assertEquals("Patient not found with id 1", exception.getMessage());
+        verify(patientRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void deletePatientById_ShouldDeletePatient_WhenPatientExists() {
         doNothing().when(patientRepository).deleteById(1L);
 
-        assertDoesNotThrow(() -> patientService.deletePatient(1L));
+        patientService.deletePatient(1L);
 
         verify(patientRepository, times(1)).deleteById(1L);
     }

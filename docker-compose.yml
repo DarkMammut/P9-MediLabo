@@ -62,6 +62,20 @@ services:
       api-gateway:
         condition: service_started
 
+  risk-service:
+    build:
+      context: ./risk-service
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    networks:
+      - medi-network
+    depends_on:
+      eureka-server:
+        condition: service_started
+      api-gateway:
+        condition: service_started
+
   patient-db:
     image: mysql:8
     container_name: patient-db
@@ -95,7 +109,7 @@ services:
     volumes:
       - ./notesdb_data:/data/db
     healthcheck:
-      test: ["CMD", "mongo", "-u", "admin", "-p", "mQ9!bX@7wZo3tJ*8", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 3
