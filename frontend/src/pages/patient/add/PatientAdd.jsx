@@ -53,7 +53,7 @@ const PatientAdd = () => {
                 : '',
         };
 
-        API.post('/patients/add', payload)
+        API.post('/api/patients/add', payload)
             .then(response => {
                 alert('Patient successfully added!');
                 navigate(`/patients/${response.data.id}`); // Redirection vers la page du patient ajouté

@@ -1,15 +1,18 @@
 services:
+
   eureka-server:
     build:
       context: ./eureka-server
       dockerfile: Dockerfile
     ports:
       - "8061:8061"
+    networks:
+      - medi-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8061/eureka/apps" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      test: ["CMD", "curl", "-f", "http://localhost:8061/eureka/apps"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   api-gateway:
     build:
@@ -17,9 +20,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    networks:
+      - medi-network
     depends_on:
       eureka-server:
-        condition: service_healthy
+        condition: service_started
 
   patient-service:
     build:
@@ -27,6 +32,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8081:8081"
+    networks:
+      - medi-network
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://patient-db:3306/patientdb
       SPRING_DATASOURCE_USERNAME: root
@@ -34,6 +41,40 @@ services:
     depends_on:
       patient-db:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
+      api-gateway:
+        condition: service_started
+
+  notes-service:
+    build:
+      context: ./notes-service
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    networks:
+      - medi-network
+    depends_on:
+      notes-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      api-gateway:
+        condition: service_started
+
+  risk-service:
+    build:
+      context: ./risk-service
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    networks:
+      - medi-network
+    depends_on:
+      eureka-server:
+        condition: service_started
+      api-gateway:
+        condition: service_started
 
   patient-db:
     image: mysql:8
@@ -42,33 +83,37 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: patientdb
-      MYSQL_USER: root
       MYSQL_PASSWORD: password
     ports:
       - "3306:3306"
+    networks:
+      - medi-network
     volumes:
       - ./patientdb_data:/var/lib/mysql
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=password" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=password"]
       interval: 10s
       timeout: 5s
       retries: 3
 
-  test-db:
-    image: mysql:8
-    container_name: test-db
+  notes-db:
+    image: mongo:5
+    container_name: notes-db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: testpassword
-      MYSQL_DATABASE: testdb
-      MYSQL_USER: testuser
-      MYSQL_PASSWORD: testpassword
+      MONGO_INITDB_DATABASE: notesdb
     ports:
-      - "3307:3306"
+      - "27017:27017"
+    networks:
+      - medi-network
     volumes:
-      - ./testdb_data:/var/lib/mysql
+      - ./notesdb_data:/data/db
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "testuser", "--password=testpassword" ]
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 3
+
+networks:
+  medi-network:
+    driver: bridge

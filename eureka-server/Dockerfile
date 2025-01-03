@@ -5,7 +5,7 @@ FROM openjdk:21-jdk-slim
 WORKDIR /app
 
 # Copier le fichier JAR généré par Maven/Gradle dans l'image
-COPY target/eureka-server-0.0.1-SNAPSHOT.jar eureka-server.jar
+COPY target/eurekaserver-1.0.0.jar eureka-server.jar
 
 # Exposer le port de l'application
 EXPOSE 8061

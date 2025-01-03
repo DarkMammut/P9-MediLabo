@@ -1,36 +1,42 @@
-import axios from 'axios';
+import axios from "axios";
 
-const api = axios.create({
-    baseURL: 'http://localhost:8080/', // API Gateway
-    withCredentials: true, // Permet l'envoi de cookies (si nécessaire)
-    timeout: 10000, // Temps d'attente avant l'abandon d'une requête
+const API = axios.create({
+    baseURL: "http://localhost:8080",
+    withCredentials: true,
 });
 
-// Intercepteur pour ajouter le token JWT à chaque requête
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
+export const setupAxiosInterceptors = (setIsAuthenticated, navigate) => {
+    API.interceptors.request.use(
+        (config) => config,
+        (error) => Promise.reject(error)
+    );
 
-// Intercepteur pour gérer les erreurs globales (optionnel)
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        // Exemple : rediriger si erreur 401 (non autorisé)
-        if (error.response?.status === 401) {
-            localStorage.removeItem("accessToken");
-            window.location.href = "/login"; // Redirection
-        }
-        return Promise.reject(error);
-    }
-);
+    API.interceptors.response.use(
+        (response) => {
+            if (response.status === 200) {
+                setIsAuthenticated(true); // L'utilisateur est authentifié
+            }
+            return response;
+        },
+        async (error) => {
+            // Gestion d'autres erreurs (ex : 500, 404, etc.)
+            if (error.response) {
+                console.error("Erreur HTTP : ", error.response.status);
+                if (error.response.status === 401) {
+                    setIsAuthenticated(false);
+                    navigate("/login");
+                }
+            } else if (error.request) {
+                console.error("Aucune réponse reçue du serveur", error.request);
+                setIsAuthenticated(true);
+            } else {
+                console.error("Erreur lors de la configuration de la requête", error.message);
+                setIsAuthenticated(true);
+            }
 
-export default api;
+            return Promise.reject(error);
+        }
+    );
+};
+
+export default API;

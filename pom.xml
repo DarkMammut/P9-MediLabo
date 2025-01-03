@@ -18,6 +18,7 @@
     <modules>
         <module>patient-service</module>
         <module>notes-service</module>
+        <module>risk-service</module>
         <module>api-gateway</module>
         <module>eureka-server</module>
     </modules>

@@ -1,34 +1,87 @@
 package com.medilabo.apigateway.controller;
 
+import com.medilabo.apigateway.component.JwtTokenProvider;
 import com.medilabo.apigateway.component.dto.AuthResponse;
 import com.medilabo.apigateway.component.dto.LoginRequest;
-import com.medilabo.apigateway.component.JwtTokenProvider;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 @RestController
+@RequestMapping("/auth")
 public class AuthController {
 
-    private final JwtTokenProvider jwtTokenProvider;
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
-    // Injecter le JwtTokenProvider
-    public AuthController(JwtTokenProvider jwtTokenProvider) {
+    private final JwtTokenProvider jwtTokenProvider;
+    private final ReactiveAuthenticationManager reactiveAuthenticationManager;
+
+    // Injection du JwtTokenProvider et du ReactiveAuthenticationManager
+    public AuthController(JwtTokenProvider jwtTokenProvider, ReactiveAuthenticationManager reactiveAuthenticationManager) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.reactiveAuthenticationManager = reactiveAuthenticationManager;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        // Vérifie les identifiants (ici avec un simple exemple, tu peux les valider via une base de données)
-        if ("user".equals(loginRequest.getUsername()) && "password123".equals(loginRequest.getPassword())) {
-            // Générer le token
-            String token = jwtTokenProvider.generateToken(loginRequest.getUsername());
-            // Renvoyer le token
-            return ResponseEntity.ok(new AuthResponse(token));
-        }
-        // Si les identifiants sont incorrects
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+    public Mono<ResponseEntity<AuthResponse>> login(@RequestBody LoginRequest loginRequest, ServerWebExchange exchange) {
+
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                loginRequest.getUsername(),
+                loginRequest.getPassword()
+        );
+
+        return reactiveAuthenticationManager.authenticate(authenticationToken) // Directly authenticate reactively
+                .map(authentication -> {
+                    // Si l'authentification réussie, générer le token JWT
+                    String token = jwtTokenProvider.generateToken(authentication.getName());
+
+                    System.out.println(token);
+
+                    // Création et ajout du cookie
+                    ResponseCookie cookie = ResponseCookie.from("JWT", token)
+                            .httpOnly(true)
+                            .secure(false) // Mettre à true en production
+                            .sameSite("Lax")
+                            .path("/")
+                            .maxAge(60 * 60) // 1 heure
+                            .build();
+
+                    exchange.getResponse().addCookie(cookie);
+
+                    // Retourner le token dans le corps de la réponse
+                    return ResponseEntity.ok(new AuthResponse(token));
+                })
+                .onErrorResume(BadCredentialsException.class, e -> {
+                    log.error("Authentication error: {}", e.getMessage());
+
+                    // Retourner un ResponseEntity avec un AuthResponse contenant un message d'erreur
+                    AuthResponse errorResponse = new AuthResponse("Invalid username or password");
+                    return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse));
+                });
+
+    }
+
+    @PostMapping("/logout")
+    public Mono<ResponseEntity<Void>> logout(ServerWebExchange exchange) {
+        // Création du cookie JWT pour le logout
+        ResponseCookie cookie = ResponseCookie.from("JWT", null)
+                .httpOnly(true)
+                .secure(false) // Passer à true en production
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(0)  // Expire immédiatement
+                .build();
+
+        exchange.getResponse().addCookie(cookie);
+        return Mono.just(ResponseEntity.status(HttpStatus.OK).build());
     }
 }
