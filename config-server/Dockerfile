@@ -5,10 +5,10 @@ FROM openjdk:21-jdk-slim
 WORKDIR /app
 
 # Copier le fichier JAR généré par Maven/Gradle dans l'image
-COPY target/api-gateway-0.0.1-SNAPSHOT.jar api-gateway.jar
+COPY target/config-server-0.0.1-SNAPSHOT.jar config-server.jar
 
 # Exposer le port de l'application
-EXPOSE 8088
+EXPOSE 8081
 
 # Commande pour lancer l'application
-ENTRYPOINT ["java", "-jar", "api-gateway.jar"]
+ENTRYPOINT ["java", "-jar", "config-server.jar"]
