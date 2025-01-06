@@ -8,7 +8,7 @@
     <packaging>pom</packaging>
 
     <name>MediLabo</name>
-    <description>A simple MediLabo.</description>
+    <description>A simple application for MediLaboSolutions</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -21,6 +21,7 @@
         <module>risk-service</module>
         <module>api-gateway</module>
         <module>eureka-server</module>
+        <module>config-server</module>
     </modules>
 
 </project>

@@ -1,5 +1,19 @@
 services:
 
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    networks:
+      - medi-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   eureka-server:
     build:
       context: ./eureka-server
@@ -8,6 +22,8 @@ services:
       - "8061:8061"
     networks:
       - medi-network
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8061/eureka/apps"]
       interval: 30s
@@ -22,7 +38,11 @@ services:
       - "8080:8080"
     networks:
       - medi-network
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     depends_on:
+      config-server:
+        condition: service_healthy
       eureka-server:
         condition: service_started
 
@@ -35,10 +55,13 @@ services:
     networks:
       - medi-network
     environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
       SPRING_DATASOURCE_URL: jdbc:mysql://patient-db:3306/patientdb
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: password
     depends_on:
+      config-server:
+        condition: service_healthy
       patient-db:
         condition: service_healthy
       eureka-server:
@@ -54,7 +77,11 @@ services:
       - "8082:8082"
     networks:
       - medi-network
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     depends_on:
+      config-server:
+        condition: service_healthy
       notes-db:
         condition: service_healthy
       eureka-server:
@@ -70,7 +97,11 @@ services:
       - "8083:8083"
     networks:
       - medi-network
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     depends_on:
+      config-server:
+        condition: service_healthy
       eureka-server:
         condition: service_started
       api-gateway:
@@ -85,7 +116,7 @@ services:
       MYSQL_DATABASE: patientdb
       MYSQL_PASSWORD: password
     ports:
-      - "3306:3306"
+      - "3307:3306"
     networks:
       - medi-network
     volumes:
@@ -103,7 +134,7 @@ services:
     environment:
       MONGO_INITDB_DATABASE: notesdb
     ports:
-      - "27017:27017"
+      - "27018:27017"
     networks:
       - medi-network
     volumes:
