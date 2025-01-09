@@ -19,13 +19,13 @@ services:
       context: ./eureka-server
       dockerfile: Dockerfile
     ports:
-      - "8061:8061"
+      - "8761:8761"
     networks:
       - medi-network
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_PROFILES_ACTIVE: prod
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8061/eureka/apps"]
+      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/apps"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -39,7 +39,7 @@ services:
     networks:
       - medi-network
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_PROFILES_ACTIVE: prod
     depends_on:
       config-server:
         condition: service_healthy
@@ -55,7 +55,7 @@ services:
     networks:
       - medi-network
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:mysql://patient-db:3306/patientdb
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: password
@@ -78,7 +78,7 @@ services:
     networks:
       - medi-network
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_PROFILES_ACTIVE: prod
     depends_on:
       config-server:
         condition: service_healthy
@@ -98,7 +98,7 @@ services:
     networks:
       - medi-network
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_PROFILES_ACTIVE: prod
     depends_on:
       config-server:
         condition: service_healthy
