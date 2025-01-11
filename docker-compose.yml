@@ -6,10 +6,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8888:8888"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
     networks:
       - medi-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://config-server:8888/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -20,15 +22,18 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
     networks:
       - medi-network
-    environment:
-      SPRING_PROFILES_ACTIVE: prod
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/apps"]
+      test: ["CMD", "curl", "-f", "http://eureka-server:8761/eureka/apps"]
       interval: 30s
       timeout: 10s
       retries: 5
+    depends_on:
+      config-server:
+        condition: service_healthy
 
   api-gateway:
     build:
@@ -36,10 +41,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
     networks:
       - medi-network
-    environment:
-      SPRING_PROFILES_ACTIVE: prod
     depends_on:
       config-server:
         condition: service_healthy
@@ -55,7 +60,7 @@ services:
     networks:
       - medi-network
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:mysql://patient-db:3306/patientdb
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: password
@@ -78,7 +83,7 @@ services:
     networks:
       - medi-network
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: docker
     depends_on:
       config-server:
         condition: service_healthy
@@ -98,7 +103,7 @@ services:
     networks:
       - medi-network
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: docker
     depends_on:
       config-server:
         condition: service_healthy
