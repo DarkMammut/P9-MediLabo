@@ -1,31 +1,32 @@
 services:
 
   config-server:
+    container_name: config-server
     build:
       context: ./config-server
       dockerfile: Dockerfile
     ports:
       - "8888:8888"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
     networks:
-      - medi-network
+      - medilabo-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://config-server:8888/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://config-server:8888/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 5
 
   eureka-server:
+    container_name: eureka-server
     build:
       context: ./eureka-server
       dockerfile: Dockerfile
     ports:
       - "8761:8761"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
     networks:
-      - medi-network
+      - medilabo-network
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
     healthcheck:
       test: ["CMD", "curl", "-f", "http://eureka-server:8761/eureka/apps"]
       interval: 30s
@@ -36,20 +37,22 @@ services:
         condition: service_healthy
 
   api-gateway:
+    container_name: api-gateway
     build:
       context: ./api-gateway
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
     networks:
-      - medi-network
+      - medilabo-network
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
     depends_on:
       config-server:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
 
   patient-service:
     build:
@@ -58,9 +61,10 @@ services:
     ports:
       - "8081:8081"
     networks:
-      - medi-network
+      - medilabo-network
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
       SPRING_DATASOURCE_URL: jdbc:mysql://patient-db:3306/patientdb
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: password
@@ -70,7 +74,7 @@ services:
       patient-db:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
       api-gateway:
         condition: service_started
 
@@ -81,9 +85,10 @@ services:
     ports:
       - "8082:8082"
     networks:
-      - medi-network
+      - medilabo-network
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
     depends_on:
       config-server:
         condition: service_healthy
@@ -101,9 +106,10 @@ services:
     ports:
       - "8083:8083"
     networks:
-      - medi-network
+      - medilabo-network
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
     depends_on:
       config-server:
         condition: service_healthy
@@ -116,16 +122,16 @@ services:
     image: mysql:8
     container_name: patient-db
     restart: always
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./patientdb_data:/var/lib/mysql
+    networks:
+      - medilabo-network
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: patientdb
       MYSQL_PASSWORD: password
-    ports:
-      - "3307:3306"
-    networks:
-      - medi-network
-    volumes:
-      - ./patientdb_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=password"]
       interval: 10s
@@ -136,14 +142,14 @@ services:
     image: mongo:5
     container_name: notes-db
     restart: always
-    environment:
-      MONGO_INITDB_DATABASE: notesdb
     ports:
       - "27018:27017"
-    networks:
-      - medi-network
     volumes:
       - ./notesdb_data:/data/db
+    networks:
+      - medilabo-network
+    environment:
+      MONGO_INITDB_DATABASE: notesdb
     healthcheck:
       test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -151,5 +157,5 @@ services:
       retries: 3
 
 networks:
-  medi-network:
+  medilabo-network:
     driver: bridge

@@ -11,7 +11,7 @@ COPY target/config-server-0.0.1-SNAPSHOT.jar config-server.jar
 RUN apt-get update && apt-get install -y curl
 
 # Exposer le port de l'application
-EXPOSE 8088
+EXPOSE 8888
 
 # Commande pour lancer l'application
 ENTRYPOINT ["java", "-jar", "config-server.jar"]
