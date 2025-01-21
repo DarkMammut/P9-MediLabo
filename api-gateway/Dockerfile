@@ -8,7 +8,7 @@ WORKDIR /app
 COPY target/api-gateway-0.0.1-SNAPSHOT.jar api-gateway.jar
 
 # Exposer le port de l'application
-EXPOSE 8088
+EXPOSE 8080
 
 # Commande pour lancer l'application
 ENTRYPOINT ["java", "-jar", "api-gateway.jar"]

@@ -11,4 +11,4 @@ COPY target/notes-service-0.0.1-SNAPSHOT.jar notes-service.jar
 EXPOSE 8082
 
 # Commande pour exécuter l'application
-ENTRYPOINT [\"java\", \"-jar\", \"notes-service.jar\"]
+ENTRYPOINT ["java", "-jar", "notes-service.jar"]

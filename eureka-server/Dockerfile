@@ -5,7 +5,7 @@ FROM openjdk:21-jdk-slim
 WORKDIR /app
 
 # Copier le fichier JAR généré par Maven/Gradle dans l'image
-COPY target/eurekaserver-1.0.0.jar eureka-server.jar
+COPY target/eureka-server-1.0.0.jar eureka-server.jar
 
 # Installer curl si nécessaire pour les healthchecks
 RUN apt-get update && apt-get install -y curl
