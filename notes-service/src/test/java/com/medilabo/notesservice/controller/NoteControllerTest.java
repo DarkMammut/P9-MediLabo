@@ -3,28 +3,34 @@ package com.medilabo.notesservice.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medilabo.notesservice.model.Note;
 import com.medilabo.notesservice.service.NoteService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(NoteController.class)
+@Import(NoteController.class)
+@TestPropertySource(locations = "classpath:application-test.properties")
+@ActiveProfiles("test") // Utilise le profil de test
 class NoteControllerTest {
 
     @Autowired
@@ -36,34 +42,34 @@ class NoteControllerTest {
     @MockBean
     private NoteService noteService;
 
-    private Note note1;
-    private Note note2;
+    private Note getNotes(int index) {
+        Note note1 = new Note("1", 123, "Test Note 1", "Details 1");
+        Note note2 = new Note("2", 123, "Test Note 2", "Details 2");
 
-    @BeforeEach
-    void setUp() {
-        note1 = new Note("1", 123, "Test Note 1", "Details 1");
-        note2 = new Note("2", 123, "Test Note 2", "Details 2");
+        if(index == 1) return note1;
+        if(index == 2) return note2;
+        return null;
     }
 
     @Test
     void getAllNotes_ShouldReturnListOfNotes() throws Exception {
-        when(noteService.getAllNotes()).thenReturn(Arrays.asList(note1, note2));
+        when(noteService.getAllNotes()).thenReturn(Arrays.asList(getNotes(1), getNotes(2)));
 
         mockMvc.perform(get("/api/notes")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(note1.getId()))
-                .andExpect(jsonPath("$[1].id").value(note2.getId()));
+                .andExpect(jsonPath("$[0].id").value(getNotes(1).getId()))
+                .andExpect(jsonPath("$[1].id").value(getNotes(2).getId()));
     }
 
     @Test
     void getNoteById_ShouldReturnNote_WhenFound() throws Exception {
-        when(noteService.getNoteById("1")).thenReturn(Optional.of(note1));
+        when(noteService.getNoteById("1")).thenReturn(Optional.ofNullable(getNotes(1)));
 
         mockMvc.perform(get("/api/notes/1")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(note1.getId()));
+                .andExpect(jsonPath("$.id").value(Objects.requireNonNull(getNotes(1)).getId()));
     }
 
     @Test
@@ -77,7 +83,7 @@ class NoteControllerTest {
 
     @Test
     void getNotesByPatId_ShouldReturnNotes_WhenFound() throws Exception {
-        when(noteService.getNotesByPatId(123)).thenReturn(Arrays.asList(note1, note2));
+        when(noteService.getNotesByPatId(123)).thenReturn(Arrays.asList(getNotes(1), getNotes(2)));
 
         mockMvc.perform(get("/api/notes/patient/123")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -96,13 +102,13 @@ class NoteControllerTest {
 
     @Test
     void createNote_ShouldReturnCreatedNote() throws Exception {
-        when(noteService.createNote(any(Note.class))).thenReturn(note1);
+        when(noteService.createNote(any(Note.class))).thenReturn(getNotes(1));
 
         mockMvc.perform(post("/api/notes")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(note1)))
+                        .content(objectMapper.writeValueAsString(getNotes(1))))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(note1.getId()));
+                .andExpect(jsonPath("$.id").value(Objects.requireNonNull(getNotes(1)).getId()));
     }
 
     @Test
@@ -124,7 +130,7 @@ class NoteControllerTest {
 
         mockMvc.perform(put("/api/notes/3")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(note1)))
+                        .content(objectMapper.writeValueAsString(getNotes(1))))
                 .andExpect(status().isNotFound());
     }
 
@@ -137,7 +143,7 @@ class NoteControllerTest {
         Mockito.verify(noteService).deleteNoteById("1");
     }
 
-    @TestConfiguration
+    @Configuration
     static class TestConfig {
         @Bean
         public NoteService noteService() {
